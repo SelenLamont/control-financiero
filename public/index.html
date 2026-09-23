@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero Personal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f6f9; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; }
+        form { display: grid; gap: 15px; margin-bottom: 30px; background: #fdfdfd; padding: 20px; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 5px; }
+        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; }
+        button { padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #2980b9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; }
+        th { background-color: #ecf0f1; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📈 Control Financiero Personal</h1>
+    <p>Convirtiendo la hoja de cálculo en una aplicación web real.</p>
+    
+    <!-- Formulario para agregar periodos -->
+    <h2>📅 Crear Nuevo Período</h2>
+    <form action="/api/periodos" method="POST">
+        <div class="form-group">
+            <label>Nombre del Período:</label>
+            <input type="text" name="nombre_periodo" placeholder="Ej: Septiembre 2026" required>
+        </div>
+        <div class="form-group">
+            <label>Saldo Inicial (\$):</label>
+            <input type="number" step="0.01" name="saldo_inicial" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+            <label>Fecha de Inicio:</label>
+            <input type="date" name="fecha_inicio" required>
+        </div>
+        <div class="form-group">
+            <label>Fecha de Finalización:</label>
+            <input type="date" name="fecha_fin" required>
+        </div>
+        <button type="submit">Guardar Período</button>
+    </form>
+
+    <!-- Tabla donde se listarán los periodos -->
+    <h2>📋 Períodos Registrados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Período</th>
+                <th>Saldo Inicial</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-periodos">
+            <!-- Los datos de MySQL se inyectarán aquí con JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    fetch('/api/periodos')
+        .then(response => response.json())
+        .then(periodos => {
+            const tbody = document.getElementById('tabla-periodos');
+            if(periodos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay períodos creados aún.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = ''; 
+
+            periodos.forEach(p => {
+                const fila = `
+                    <tr>
+                        <td><strong>${p.nombre_periodo}</strong></td>
+                        <td>$${parseFloat(p.saldo_inicial).toFixed(2)}</td>
+                        <td>${p.fecha_inicio.split('T')[0]}</td>
+                        <td>${p.fecha_fin.split('T')[0]}</td>
+                        <td>
+                            <a href="/movimientos.html?id=${p.id}" style="padding: 6px 12px; background: #2c3e50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; display: inline-block;">👁 Ver Movimientos</a>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += fila;
+            });
+        });
+</script>
+</body>
+</html>

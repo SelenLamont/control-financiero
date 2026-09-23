@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movimientos de Caja</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f9; color: #333; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header-box { background: #2c3e50; color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .resumen-saldos { display: flex; gap: 15px; margin-top: 10px; font-weight: bold; font-size: 15px; }
+        .grid-formularios { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .card { background: #fdfdfd; padding: 15px; border: 1px solid #e2e8f0; border-radius: 6px; }
+        form { display: grid; gap: 8px; }
+        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; }
+        button { padding: 9px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-ingreso { background-color: #2ecc71; }
+        .btn-egreso { background-color: #e74c3c; }
+        .btn-action { background: #34495e; text-decoration: none; color: white; padding: 8px 12px; border-radius: 4px; font-weight: bold; display: inline-block; margin-right: 10px; font-size: 14px; }
+        .btn-pdf { background-color: #e67e22; }
+        .btn-danger { background-color: #c0392b; padding: 3px 8px; font-size: 11px; }
+        .grid-tablas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #cbd5e1; }
+        th { background-color: #ecf0f1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="margin-bottom: 15px;">
+        <a href="/" class="btn-action">⬅ Volver a Períodos</a>
+        <a id="lnk-pdf" href="#" class="btn-action btn-pdf">📥 Descargar Reporte PDF</a>
+    </div>
+    
+    <div class="header-box">
+        <h1 id="nombre-periodo-titulo" style="margin:0; font-size:22px;">Cargando...</h1>
+        <div class="resumen-saldos">
+            <span id="txt-saldo-inicial">...</span> | 
+            <span id="txt-total-ingresos" style="color:#2ecc71;">...</span> | 
+            <span id="txt-total-egresos" style="color:#ff7675;">...</span> | 
+            <span id="txt-saldo-final" style="text-decoration:underline;">...</span>
+        </div>
+    </div>
+
+    <!-- Cierre de Período -->
+    <div class="card" style="margin-bottom: 25px; background: #fff9db; border-color: #f59f00;">
+        <h3 style="margin-top:0; color:#f59f00; font-size:16px;">🔒 Cerrar este Mes y Traspasar Saldo Acumulado</h3>
+        <form id="form-cerrar-mes" style="display:flex; gap:8px; flex-wrap: wrap;">
+            <input type="text" id="c-nombre" placeholder="Nombre Siguiente Mes" required style="flex:2;">
+            <input type="date" id="c-inicio" required style="flex:1;">
+            <input type="date" id="c-fin" required style="flex:1;">
+            <button type="submit" style="background:#f59f00; flex:1;">Efectuar Cierre</button>
+        </form>
+    </div>
+
+    <div class="grid-formularios">
+        <div class="card">
+            <h3 style="margin-top:0; font-size:16px;">➕ Registrar Ingreso</h3>
+            <form id="form-ingreso">
+                <input type="hidden" name="periodo_id" class="input-periodo-id">
+                <input type="text" name="descripcion" placeholder="Descripción (ej: Renta Apto 1)" required>
+                <input type="number" step="0.01" name="monto" placeholder="Monto \$" required>
+                <input type="date" name="fecha" required>
+                <button type="submit" class="btn-ingreso">Guardar Ingreso</button>
+            </form>
+        </div>
+        <div class="card">
+            <h3 style="margin-top:0; font-size:16px;">➖ Registrar Egreso (Gasto)</h3>
+            <form id="form-egreso">
+                <input type="hidden" name="periodo_id" class="input-periodo-id">
+                <input type="text" name="descripcion" placeholder="Descripción (ej: Agua Oneida)" required>
+                <input type="number" step="0.01" name="monto" placeholder="Monto \$" required>
+                <input type="date" name="fecha" required>
+                <button type="submit" class="btn-egreso">Guardar Egreso</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BARRA DE BÚSQUEDA -->
+    <div class="card" style="margin-bottom: 20px; background: #f8fafc;">
+        <label style="font-weight:bold; display:block; margin-bottom:6px; font-size:14px;">🔍 Buscar movimientos en tiempo real:</label>
+        <input type="text" id="buscar-movimiento" placeholder="Escribe para filtrar... (ej: Diana, Predial, CENS)" style="width:100%; box-sizing:border-box; padding:8px;">
+    </div>
+
+    <div class="grid-tablas">
+        <div>
+            <h3>📋 Lista de Ingresos</h3>
+            <table>
+                <thead><tr><th>Fecha</th><th>Detalle</th><th>Monto</th><th>Acción</th></tr></thead>
+                <tbody id="tabla-ingresos"></tbody>
+            </table>
+        </div>
+        <div>
+            <h3>📋 Lista de Egresos</h3>
+            <table>
+                <thead><tr><th>Fecha</th><th>Detalle</th><th>Monto</th><th>Acción</th></tr></thead>
+                <tbody id="tabla-egresos"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const periodoId = urlParams.get('id');
+    
+    document.querySelectorAll('.input-periodo-id').forEach(input => input.value = periodoId);
+    document.getElementById('lnk-pdf').href = `/api/periodos/${periodoId}/pdf`;
+
+    function cargarDatos() {
+        fetch(`/api/periodos/${periodoId}/resumen`)
+            .then(res => res.json())
+            .then(data => {
+                // CORRECCIÓN HISTÓRICA: Se accede usando [0] porque MySQL devuelve un arreglo
+                const p = data.periodo; 
+                const r = data.resumen || { total_ingresos: 0, total_egresos: 0 };
+
+                document.getElementById('nombre-periodo-titulo').innerText = `📅 Movimientos de: ${p.nombre_periodo}`;
+                
+                const inicial = parseFloat(p.saldo_inicial);
+                const ingresos = parseFloat(r.total_ingresos || 0);
+                const egresos = parseFloat(r.total_egresos || 0);
+                const final = inicial + ingresos - egresos;
+
+                document.getElementById('txt-saldo-inicial').innerText = `Inicial: $${inicial.toFixed(2)}`;
+                document.getElementById('txt-total-ingresos').innerText = `Ingresos: +$${ingresos.toFixed(2)}`;
+                document.getElementById('txt-total-egresos').innerText = `Egresos: -$${egresos.toFixed(2)}`;
+                document.getElementById('txt-saldo-final').innerText = `Saldo Final: $${final.toFixed(2)}`;
+
+                const tIngresos = document.getElementById('tabla-ingresos');
+                tIngresos.innerHTML = '';
+                data.ingresos.forEach(i => {
+                    const f = i.fecha.includes('T') ? i.fecha.split('T')[0] : i.fecha;
+                    tIngresos.innerHTML += `<tr><td>${f}</td><td>${i.descripcion}</td><td style="color:green">+$${parseFloat(i.monto).toFixed(2)}</td><td><button class="btn-danger" onclick="eliminarMov('ingresos', ${i.id})">Borrar</button></td></tr>`;
+                });
+
+                const tEgresos = document.getElementById('tabla-egresos');
+                tEgresos.innerHTML = '';
+                data.egresos.forEach(e => {
+                    const f = e.fecha.includes('T') ? e.fecha.split('T')[0] : e.fecha;
+                    tEgresos.innerHTML += `<tr><td>${f}</td><td>${e.descripcion}</td><td style="color:red">-$${parseFloat(e.monto).toFixed(2)}</td><td><button class="btn-danger" onclick="eliminarMov('egresos', ${e.id})">Borrar</button></td></tr>`;
+                });
+            });
+    }
+
+    function eliminarMov(tipo, id) {
+        if(confirm('¿Deseas borrar este registro financiero?')) {
+            fetch(`/api/${tipo}/${id}`, { method: 'DELETE' }).then(() => cargarDatos());
+        }
+    }
+
+    function configurarFormulario(formId, url) {
+        document.getElementById(formId).addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(this));
+            fetch(url, { method: 'POST', body: formData }).then(() => { 
+                this.reset(); 
+                cargarDatos(); 
+            });
+        });
+    }
+
+    document.getElementById('form-cerrar-mes').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const payload = {
+            nuevo_nombre: document.getElementById('c-nombre').value,
+            nueva_fecha_inicio: document.getElementById('c-inicio').value,
+            nueva_fecha_fin: document.getElementById('c-fin').value
+        };
+        fetch(`/api/periodos/${periodoId}/cerrar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert('¡Mes contable cerrado con éxito!');
+            window.location.href = '/';
+        });
+    });
+
+    document.getElementById('buscar-movimiento').addEventListener('input', function(e) {
+        const txt = e.target.value.toLowerCase();
+        document.querySelectorAll('table tbody tr').forEach(fila => {
+            fila.style.display = fila.innerText.toLowerCase().includes(txt) ? '' : 'none';
+        });
+    });
+
+    configurarFormulario('form-ingreso', '/api/ingresos');
+    configurarFormulario('form-egreso', '/api/egresos');
+    cargarDatos();
+</script>
+</body>
+</html>
