@@ -10,8 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^18.0.3",
+    "exceljs": "^3.4.0",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "mysql2": "^3.24.4",
     "pdfkit": "^0.20.2"
   }
