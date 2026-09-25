@@ -266,9 +266,9 @@
                 const tIng = document.getElementById('tabla-ingresos');
                 tIng.innerHTML = data.ingresos.length === 0 
                     ? '<tr><td colspan="5">No hay ingresos registrados.</td></tr>'
-                    : data.ingresos.map(i => `
+                    : data.ingresos.map((i, index) => `
                         <tr>
-                            <td>${i.id}</td>
+                            <td>${index + 1}</td>
                             <td>${formatearFecha(i.fecha)}</td>
                             <td>${i.descripcion}</td>
                             <td><strong>${formatearCOP(i.monto)}</strong></td>
@@ -282,9 +282,9 @@
                 const tEgr = document.getElementById('tabla-egresos');
                 tEgr.innerHTML = data.egresos.length === 0 
                     ? '<tr><td colspan="5">No hay egresos registrados.</td></tr>'
-                    : data.egresos.map(e => `
+                    : data.egresos.map((e, index) => `
                         <tr>
-                            <td>${e.id}</td>
+                            <td>${index + 1}</td>
                             <td>${formatearFecha(e.fecha)}</td>
                             <td>${e.descripcion}</td>
                             <td><strong>${formatearCOP(e.monto)}</strong></td>
