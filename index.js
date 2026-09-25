@@ -136,10 +136,10 @@ app.get('/api/periodos/:id/resumen', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!periodos.length) return res.status(404).json({ error: 'No encontrado' });
 
-        db.query('SELECT * FROM ingresos WHERE periodo_id = ? ORDER BY fecha DESC', [pId], (err, ingresos) => {
+        db.query('SELECT * FROM ingresos WHERE periodo_id = ? ORDER BY id ASC', [pId], (err, ingresos) => {
             if (err) return res.status(500).json({ error: err.message });
 
-            db.query('SELECT * FROM egresos WHERE periodo_id = ? ORDER BY fecha DESC', [pId], (err, egresos) => {
+            db.query('SELECT * FROM egresos WHERE periodo_id = ? ORDER BY id ASC', [pId], (err, egresos) => {
                 if (err) return res.status(500).json({ error: err.message });
 
                 db.query(`
