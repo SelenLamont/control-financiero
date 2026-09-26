@@ -134,6 +134,46 @@ app.get('/api/periodos', (req, res) => {
     });
 });
 
+app.get('/api/buscar', (req, res) => {
+    const termino = (req.query.q || '').trim();
+    if (!termino) {
+        return res.json({ ingresos: [], egresos: [], periodos: [] });
+    }
+    const like = `%${termino}%`;
+
+    const sqlIngresos = `
+        SELECT i.id, i.fecha, i.descripcion, i.categoria, i.monto, i.periodo_id, p.nombre_periodo
+        FROM ingresos i
+        JOIN periodos p ON p.id = i.periodo_id
+        WHERE i.descripcion LIKE ? OR i.categoria LIKE ?
+        ORDER BY i.fecha DESC
+    `;
+    const sqlEgresos = `
+        SELECT e.id, e.fecha, e.descripcion, e.categoria, e.monto, e.periodo_id, p.nombre_periodo
+        FROM egresos e
+        JOIN periodos p ON p.id = e.periodo_id
+        WHERE e.descripcion LIKE ? OR e.categoria LIKE ?
+        ORDER BY e.fecha DESC
+    `;
+    const sqlPeriodos = `
+        SELECT id, nombre_periodo, fecha_inicio, fecha_fin
+        FROM periodos
+        WHERE nombre_periodo LIKE ?
+        ORDER BY fecha_inicio DESC
+    `;
+
+    db.query(sqlIngresos, [like, like], (err, ingresos) => {
+        if (err) return res.status(500).json({ error: err.message });
+        db.query(sqlEgresos, [like, like], (err, egresos) => {
+            if (err) return res.status(500).json({ error: err.message });
+            db.query(sqlPeriodos, [like], (err, periodos) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ ingresos, egresos, periodos });
+            });
+        });
+    });
+});
+
 app.get('/api/periodos/:id/resumen', (req, res) => {
     const pId = req.params.id;
     db.query('SELECT * FROM periodos WHERE id = ?', [pId], (err, periodos) => {

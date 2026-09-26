@@ -18,6 +18,12 @@
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; font-size: 14px; }
+        th { background-color: #f2f2f2; }
+        #resultados-busqueda h3 { margin-top: 20px; margin-bottom: 5px; color: #2c3e50; }
+        .busqueda-fila { display: flex; gap: 10px; }
+        .busqueda-fila input { flex: 1; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -66,6 +72,15 @@
             </div>
             <button type="submit" class="btn btn-primary">Crear Período</button>
         </form>
+    </div>
+
+    <div class="card">
+        <h2>🔍 Buscar en toda la base de datos</h2>
+        <div class="busqueda-fila">
+            <input type="text" id="busqueda-input" placeholder="Buscar por descripción, categoría o nombre de período...">
+            <button class="btn btn-primary" onclick="buscarGlobal()">Buscar</button>
+        </div>
+        <div id="resultados-busqueda"></div>
     </div>
 
     <h2>Períodos Registrados</h2>
@@ -188,6 +203,80 @@
                 document.getElementById('periodos-container').innerHTML = '<p>Error al cargar los períodos. Verifica tu conexión.</p>';
             }
         }
+
+        async function buscarGlobal() {
+            const q = document.getElementById('busqueda-input').value.trim();
+            const contenedor = document.getElementById('resultados-busqueda');
+            if (!q) {
+                contenedor.innerHTML = '';
+                return;
+            }
+            contenedor.innerHTML = '<p>Buscando...</p>';
+            try {
+                const res = await fetch(`/api/buscar?q=${encodeURIComponent(q)}`);
+                if (!res.ok) throw new Error('Error en la búsqueda');
+                const data = await res.json();
+
+                const total = data.periodos.length + data.ingresos.length + data.egresos.length;
+                if (total === 0) {
+                    contenedor.innerHTML = '<p>No se encontraron resultados.</p>';
+                    return;
+                }
+
+                let html = '';
+
+                if (data.periodos.length) {
+                    html += '<h3>Períodos</h3><table><thead><tr><th>Nombre</th><th>Inicio</th><th>Fin</th><th></th></tr></thead><tbody>';
+                    html += data.periodos.map(p => `
+                        <tr>
+                            <td>${p.nombre_periodo}</td>
+                            <td>${p.fecha_inicio ? p.fecha_inicio.split('T')[0] : ''}</td>
+                            <td>${p.fecha_fin ? p.fecha_fin.split('T')[0] : ''}</td>
+                            <td><a href="movimientos.html?id=${p.id}" class="btn btn-primary">Ver</a></td>
+                        </tr>
+                    `).join('');
+                    html += '</tbody></table>';
+                }
+
+                if (data.ingresos.length) {
+                    html += '<h3>Ingresos</h3><table><thead><tr><th>Fecha</th><th>Período</th><th>Descripción</th><th>Categoría</th><th>Monto</th><th></th></tr></thead><tbody>';
+                    html += data.ingresos.map(i => `
+                        <tr>
+                            <td>${i.fecha ? i.fecha.split('T')[0] : ''}</td>
+                            <td>${i.nombre_periodo}</td>
+                            <td>${i.descripcion}</td>
+                            <td>${i.categoria}</td>
+                            <td>${formatearCOP(i.monto)}</td>
+                            <td><a href="movimientos.html?id=${i.periodo_id}" class="btn btn-primary">Ver</a></td>
+                        </tr>
+                    `).join('');
+                    html += '</tbody></table>';
+                }
+
+                if (data.egresos.length) {
+                    html += '<h3>Egresos</h3><table><thead><tr><th>Fecha</th><th>Período</th><th>Descripción</th><th>Categoría</th><th>Monto</th><th></th></tr></thead><tbody>';
+                    html += data.egresos.map(e => `
+                        <tr>
+                            <td>${e.fecha ? e.fecha.split('T')[0] : ''}</td>
+                            <td>${e.nombre_periodo}</td>
+                            <td>${e.descripcion}</td>
+                            <td>${e.categoria}</td>
+                            <td>${formatearCOP(e.monto)}</td>
+                            <td><a href="movimientos.html?id=${e.periodo_id}" class="btn btn-primary">Ver</a></td>
+                        </tr>
+                    `).join('');
+                    html += '</tbody></table>';
+                }
+
+                contenedor.innerHTML = html;
+            } catch (err) {
+                contenedor.innerHTML = '<p>Error al realizar la búsqueda.</p>';
+            }
+        }
+
+        document.getElementById('busqueda-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') buscarGlobal();
+        });
 
         cargarUsuario();
         cargarPeriodos();
