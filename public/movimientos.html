@@ -86,6 +86,17 @@
                     <label>Descripción:</label>
                     <input type="text" id="ing-desc" required>
                 </div>
+                                <div class="form-group">
+                    <label>Categoría:</label>
+                    <select id="ing-categoria" required>
+                        <option value="">Selecciona una categoría</option>
+                        <option value="Arriendo">Arriendo</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Depósito">Depósito</option>
+                        <option value="Servicios públicos">Servicios públicos</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Monto (COP):</label>
                     <input type="number" step="0.01" id="ing-monto" required>
@@ -105,6 +116,18 @@
                     <label>Descripción:</label>
                     <input type="text" id="egr-desc" required>
                 </div>
+                 <div class="form-group">
+                    <label>Categoría:</label>
+                    <select id="egr-categoria" required>
+                        <option value="">Selecciona una categoría</option>
+                        <option value="Servicios públicos">Servicios públicos</option>
+                        <option value="Arriendo/Condominio">Arriendo/Condominio</option>
+                        <option value="Impuestos">Impuestos</option>
+                        <option value="Honorarios/Diligencias">Honorarios/Diligencias</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Monto (COP):</label>
                     <input type="number" step="0.01" id="egr-monto" required>
@@ -116,6 +139,7 @@
                 <button type="submit" class="btn btn-danger">Guardar Egreso</button>
             </form>
         </div>
+
     </div>
 
     <div class="card">
@@ -126,6 +150,7 @@
                     <th>No.</th>
                     <th>Fecha</th>
                     <th>Descripción</th>
+                    <th>Categoría</th>
                     <th>Monto</th>
                     <th class="col-accion hidden">Acción</th>
                 </tr>
@@ -142,6 +167,7 @@
                     <th>No.</th>
                     <th>Fecha</th>
                     <th>Descripción</th>
+                    <th>Categoría</th>
                     <th>Monto</th>
                     <th class="col-accion hidden">Acción</th>
                 </tr>
@@ -185,6 +211,10 @@
                 <div class="form-group">
                     <label>Descripción:</label>
                     <input type="text" id="e-desc" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría:</label>
+                    <select id="e-categoria" required></select>
                 </div>
                 <div class="form-group">
                     <label>Monto (COP):</label>
@@ -265,12 +295,13 @@
 
                 const tIng = document.getElementById('tabla-ingresos');
                 tIng.innerHTML = data.ingresos.length === 0 
-                    ? '<tr><td colspan="5">No hay ingresos registrados.</td></tr>'
+                    ? '<tr><td colspan="6">No hay ingresos registrados.</td></tr>'
                     : data.ingresos.map((i, index) => `
                         <tr>
                             <td>${index + 1}</td>
                             <td>${formatearFecha(i.fecha)}</td>
                             <td>${i.descripcion}</td>
+                            <td>${i.categoria}</td>
                             <td><strong>${formatearCOP(i.monto)}</strong></td>
                             ${esAdmin ? `<td>
                                 <button onclick='abrirModalEditar("ingresos", ${JSON.stringify(i)})' class="btn btn-editar">Editar</button>
@@ -281,12 +312,13 @@
 
                 const tEgr = document.getElementById('tabla-egresos');
                 tEgr.innerHTML = data.egresos.length === 0 
-                    ? '<tr><td colspan="5">No hay egresos registrados.</td></tr>'
+                    ? '<tr><td colspan="6">No hay egresos registrados.</td></tr>'
                     : data.egresos.map((e, index) => `
                         <tr>
                             <td>${index + 1}</td>
                             <td>${formatearFecha(e.fecha)}</td>
                             <td>${e.descripcion}</td>
+                            <td>${e.categoria}</td>
                             <td><strong>${formatearCOP(e.monto)}</strong></td>
                             ${esAdmin ? `<td>
                                 <button onclick='abrirModalEditar("egresos", ${JSON.stringify(e)})' class="btn btn-editar">Editar</button>
@@ -309,7 +341,8 @@
                         periodo_id: periodoId,
                         descripcion: document.getElementById('ing-desc').value,
                         monto: document.getElementById('ing-monto').value,
-                        fecha: document.getElementById('ing-fecha').value
+                        fecha: document.getElementById('ing-fecha').value,
+                        categoria: document.getElementById('ing-categoria').value
                     })
                 });
                 const data = await res.json();
@@ -331,7 +364,8 @@
                         periodo_id: periodoId,
                         descripcion: document.getElementById('egr-desc').value,
                         monto: document.getElementById('egr-monto').value,
-                        fecha: document.getElementById('egr-fecha').value
+                        fecha: document.getElementById('egr-fecha').value,
+                        categoria: document.getElementById('egr-categoria').value
                     })
                 });
                 const data = await res.json();
@@ -353,6 +387,8 @@
                 alert('No se pudo eliminar el registro.');
             }
         }
+        const categoriasIngresos = ['Arriendo', 'Transferencia', 'Depósito', 'Servicios públicos', 'Otros'];
+        const categoriasEgresos = ['Servicios públicos', 'Arriendo/Condominio', 'Impuestos', 'Honorarios/Diligencias', 'Transferencia', 'Otros'];
 
         function abrirModalEditar(tipo, registro) {
             edicionActual = { tipo, id: registro.id };
@@ -360,6 +396,12 @@
             document.getElementById('e-desc').value = registro.descripcion;
             document.getElementById('e-monto').value = registro.monto;
             document.getElementById('e-fecha').value = formatearFecha(registro.fecha);
+
+            const categorias = tipo === 'ingresos' ? categoriasIngresos : categoriasEgresos;
+            const selectCategoria = document.getElementById('e-categoria');
+            selectCategoria.innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+            selectCategoria.value = registro.categoria;
+
             document.getElementById('e-error').textContent = '';
             document.getElementById('modal-editar').classList.remove('hidden');
         }
@@ -380,7 +422,8 @@
                     body: JSON.stringify({
                         descripcion: document.getElementById('e-desc').value,
                         monto: document.getElementById('e-monto').value,
-                        fecha: document.getElementById('e-fecha').value
+                        fecha: document.getElementById('e-fecha').value,
+                        categoria: document.getElementById('e-categoria').value
                     })
                 });
                 const data = await res.json();

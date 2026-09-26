@@ -49,8 +49,12 @@ function soloAdmin(req, res, next) {
 
 // NUEVO: Middleware de validación para ingresos/egresos
 function validarMovimiento(req, res, next) {
-    const { descripcion, monto, fecha } = req.body;
+    const { descripcion, monto, fecha, categoria } = req.body;
     const errores = [];
+
+    if (!categoria || typeof categoria !== 'string' || categoria.trim().length === 0) {
+        errores.push('Debes seleccionar una categoría.');
+    }
 
     if (!descripcion || typeof descripcion !== 'string' || descripcion.trim().length === 0) {
         errores.push('La descripción no puede estar vacía.');
@@ -354,10 +358,10 @@ app.post('/api/periodos', soloAdmin, (req, res) => {
 });
 
 app.post('/api/ingresos', soloAdmin, validarMovimiento, (req, res) => {
-    const { periodo_id, descripcion, monto, fecha } = req.body;
+    const { periodo_id, descripcion, monto, fecha, categoria } = req.body;
     db.query(
-        'INSERT INTO ingresos (periodo_id, descripcion, monto, fecha) VALUES (?, ?, ?, ?)', 
-        [periodo_id, descripcion, monto, fecha], 
+        'INSERT INTO ingresos (periodo_id, descripcion, monto, fecha, categoria) VALUES (?, ?, ?, ?, ?)', 
+        [periodo_id, descripcion, monto, fecha, categoria], 
         (err) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true });
@@ -366,10 +370,10 @@ app.post('/api/ingresos', soloAdmin, validarMovimiento, (req, res) => {
 });
 
 app.post('/api/egresos', soloAdmin, validarMovimiento, (req, res) => {
-    const { periodo_id, descripcion, monto, fecha } = req.body;
+    const { periodo_id, descripcion, monto, fecha, categoria } = req.body;
     db.query(
-        'INSERT INTO egresos (periodo_id, descripcion, monto, fecha) VALUES (?, ?, ?, ?)', 
-        [periodo_id, descripcion, monto, fecha], 
+        'INSERT INTO egresos (periodo_id, descripcion, monto, fecha, categoria) VALUES (?, ?, ?, ?, ?)', 
+        [periodo_id, descripcion, monto, fecha, categoria], 
         (err) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true });
@@ -378,10 +382,10 @@ app.post('/api/egresos', soloAdmin, validarMovimiento, (req, res) => {
 });
 
 app.put('/api/ingresos/:id', soloAdmin, validarMovimiento, (req, res) => {
-    const { descripcion, monto, fecha } = req.body;
+    const { descripcion, monto, fecha, categoria } = req.body;
     db.query(
-        'UPDATE ingresos SET descripcion = ?, monto = ?, fecha = ? WHERE id = ?',
-        [descripcion, monto, fecha, req.params.id],
+        'UPDATE ingresos SET descripcion = ?, monto = ?, fecha = ?, categoria = ? WHERE id = ?',
+        [descripcion, monto, fecha, categoria, req.params.id],
         (err) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true });
@@ -390,10 +394,10 @@ app.put('/api/ingresos/:id', soloAdmin, validarMovimiento, (req, res) => {
 });
 
 app.put('/api/egresos/:id', soloAdmin, validarMovimiento, (req, res) => {
-    const { descripcion, monto, fecha } = req.body;
+    const { descripcion, monto, fecha, categoria } = req.body;
     db.query(
-        'UPDATE egresos SET descripcion = ?, monto = ?, fecha = ? WHERE id = ?',
-        [descripcion, monto, fecha, req.params.id],
+        'UPDATE egresos SET descripcion = ?, monto = ?, fecha = ?, categoria = ? WHERE id = ?',
+        [descripcion, monto, fecha, categoria, req.params.id],
         (err) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true });
