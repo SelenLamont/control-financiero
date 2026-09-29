@@ -103,7 +103,7 @@
                 </div>
                 <div class="form-group">
                     <label>Fecha:</label>
-                    <input type="date" id="ing-fecha" required>
+                    <input type="text" class="fecha" id="ing-fecha" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" autocomplete="off" required>
                 </div>
                 <button type="submit" class="btn btn-success">Guardar Ingreso</button>
             </form>
@@ -134,7 +134,7 @@
                 </div>
                 <div class="form-group">
                     <label>Fecha:</label>
-                    <input type="date" id="egr-fecha" required>
+                    <input type="text" class="fecha" id="egr-fecha" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" autocomplete="off" required>
                 </div>
                 <button type="submit" class="btn btn-danger">Guardar Egreso</button>
             </form>
@@ -188,11 +188,11 @@
                 </div>
                 <div class="form-group">
                     <label>Fecha de Inicio:</label>
-                    <input type="date" id="c-inicio" required>
+                    <input type="text" class="fecha" id="c-inicio" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label>Fecha de Fin:</label>
-                    <input type="date" id="c-fin" required>
+                    <input type="text" class="fecha" id="c-fin" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" autocomplete="off" required>
                 </div>
                 <div class="error-msg" id="c-error"></div>
                 <div class="modal-actions">
@@ -222,7 +222,7 @@
                 </div>
                 <div class="form-group">
                     <label>Fecha:</label>
-                    <input type="date" id="e-fecha" required>
+                    <input type="text" class="fecha" id="e-fecha" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" autocomplete="off" required>
                 </div>
                 <div class="error-msg" id="e-error"></div>
                 <div class="modal-actions">
@@ -247,6 +247,43 @@
         function formatearFecha(f) {
             return f ? f.split('T')[0] : '';
         }
+
+        // ---- Fechas en formato dd/mm/aaaa (campo de texto con máscara) ----
+        function fechaAISO(txt) {
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((txt || '').trim());
+            return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+        }
+
+        function ISOAFecha(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+            return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+        }
+
+        function fechaValida(txt) {
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(txt);
+            if (!m) return false;
+            const d = +m[1], mes = +m[2], a = +m[3];
+            const f = new Date(a, mes - 1, d);
+            return a >= 2000 && f.getFullYear() === a && f.getMonth() === mes - 1 && f.getDate() === d;
+        }
+
+        document.querySelectorAll('input.fecha').forEach(inp => {
+            inp.addEventListener('input', () => {
+                const d = inp.value.replace(/\D/g, '').slice(0, 8);
+                inp.value = d.slice(0, 2)
+                    + (d.length > 2 ? '/' + d.slice(2, 4) : '')
+                    + (d.length > 4 ? '/' + d.slice(4) : '');
+                inp.setCustomValidity(
+                    inp.value === '' || fechaValida(inp.value) ? '' : 'Ingresa una fecha válida: dd/mm/aaaa'
+                );
+            });
+        });
+
+        document.querySelectorAll('form').forEach(f => {
+            f.addEventListener('reset', () => {
+                f.querySelectorAll('input.fecha').forEach(i => i.setCustomValidity(''));
+            });
+        });
 
         async function init() {
             if (!periodoId) {
@@ -299,7 +336,7 @@
                     : data.ingresos.map((i, index) => `
                         <tr>
                             <td>${index + 1}</td>
-                            <td>${formatearFecha(i.fecha)}</td>
+                            <td>${ISOAFecha(formatearFecha(i.fecha))}</td>
                             <td>${i.descripcion}</td>
                             <td>${i.categoria}</td>
                             <td><strong>${formatearCOP(i.monto)}</strong></td>
@@ -316,7 +353,7 @@
                     : data.egresos.map((e, index) => `
                         <tr>
                             <td>${index + 1}</td>
-                            <td>${formatearFecha(e.fecha)}</td>
+                            <td>${ISOAFecha(formatearFecha(e.fecha))}</td>
                             <td>${e.descripcion}</td>
                             <td>${e.categoria}</td>
                             <td><strong>${formatearCOP(e.monto)}</strong></td>
@@ -341,7 +378,7 @@
                         periodo_id: periodoId,
                         descripcion: document.getElementById('ing-desc').value,
                         monto: document.getElementById('ing-monto').value,
-                        fecha: document.getElementById('ing-fecha').value,
+                        fecha: fechaAISO(document.getElementById('ing-fecha').value),
                         categoria: document.getElementById('ing-categoria').value
                     })
                 });
@@ -364,7 +401,7 @@
                         periodo_id: periodoId,
                         descripcion: document.getElementById('egr-desc').value,
                         monto: document.getElementById('egr-monto').value,
-                        fecha: document.getElementById('egr-fecha').value,
+                        fecha: fechaAISO(document.getElementById('egr-fecha').value),
                         categoria: document.getElementById('egr-categoria').value
                     })
                 });
@@ -388,6 +425,7 @@
             }
         }
         const categoriasIngresos = ['Arriendo', 'Transferencia', 'Depósito', 'Servicios públicos', 'Otros'];
+
         const categoriasEgresos = ['Servicios públicos', 'Arriendo/Condominio', 'Impuestos', 'Honorarios/Diligencias', 'Transferencia', 'Otros'];
 
         function abrirModalEditar(tipo, registro) {
@@ -395,7 +433,8 @@
             document.getElementById('editar-titulo').textContent = tipo === 'ingresos' ? '✏️ Editar Ingreso' : '✏️ Editar Egreso';
             document.getElementById('e-desc').value = registro.descripcion;
             document.getElementById('e-monto').value = registro.monto;
-            document.getElementById('e-fecha').value = formatearFecha(registro.fecha);
+            document.getElementById('e-fecha').value = ISOAFecha(formatearFecha(registro.fecha));
+            document.getElementById('e-fecha').setCustomValidity('');
 
             const categorias = tipo === 'ingresos' ? categoriasIngresos : categoriasEgresos;
             const selectCategoria = document.getElementById('e-categoria');
@@ -422,7 +461,7 @@
                     body: JSON.stringify({
                         descripcion: document.getElementById('e-desc').value,
                         monto: document.getElementById('e-monto').value,
-                        fecha: document.getElementById('e-fecha').value,
+                        fecha: fechaAISO(document.getElementById('e-fecha').value),
                         categoria: document.getElementById('e-categoria').value
                     })
                 });
@@ -457,8 +496,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         nuevo_nombre: document.getElementById('c-nombre').value,
-                        nueva_fecha_inicio: document.getElementById('c-inicio').value,
-                        nueva_fecha_fin: document.getElementById('c-fin').value
+                        nueva_fecha_inicio: fechaAISO(document.getElementById('c-inicio').value),
+                        nueva_fecha_fin: fechaAISO(document.getElementById('c-fin').value)
                     })
                 });
                 const data = await res.json();
