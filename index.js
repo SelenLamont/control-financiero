@@ -95,6 +95,14 @@ const formatearCOP = (monto) => {
     return `COP ${valor.toLocaleString('es-CO')}`;
 };
 
+// Respuesta de error al insertar un período (nombre repetido => 409 con mensaje claro)
+function errorAlCrearPeriodo(err, res) {
+    if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ error: 'Ya existe un período con ese nombre. Usa un nombre distinto.' });
+    }
+    return res.status(500).json({ error: err.message });
+}
+
 // --- AUTENTICACIÓN ---
 app.post('/api/login', (req, res) => {
     const username = req.body.username ? req.body.username.trim() : '';
@@ -391,7 +399,7 @@ app.post('/api/periodos', soloAdmin, (req, res) => {
         'INSERT INTO periodos (nombre_periodo, saldo_inicial, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)', 
         [nombre_periodo.trim(), saldoNum, fecha_inicio, fecha_fin], 
         (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+            if (err) return errorAlCrearPeriodo(err, res);
             res.json({ success: true });
         }
     );
@@ -491,7 +499,7 @@ app.post('/api/periodos/:id/cerrar', soloAdmin, (req, res) => {
             'INSERT INTO periodos (nombre_periodo, saldo_inicial, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)',
             [nuevo_nombre.trim(), saldoFinalCalculado, nueva_fecha_inicio, nueva_fecha_fin], 
             (err) => {
-                if (err) return res.status(500).json({ error: err.message });
+                if (err) return errorAlCrearPeriodo(err, res);
                 res.json({ success: true });
             }
         );
